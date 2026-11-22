@@ -88,7 +88,7 @@ const roster = R => io.to(R.code).emit('roster',
 
 // ===== 4. Simulación (física y colisiones) =====
 function step(R, dt) {
-  if (R.phase === 'over' && Date.now() - R.overDede > ESPERA_MAX * 1000) { draw(R, R.esquivador); return; }
+  if (R.phase === 'over' && Date.now() - R.overDesde > ESPERA_MAX * 1000) { draw(R, R.esquivador); return; }
   const d = clamp(R.target - R.ship, -CFG.SHIP_MAX_SPEED * dt, CFG.SHIP_MAX_SPEED * dt);
   R.ship = clamp(R.ship + d, -CFG.SHIP_LIM, CFG.SHIP_LIM);
 
@@ -178,7 +178,7 @@ function draw(R, exclude) {
 
 function revisarSorteo(R) {
   if (R.phase !== 'over') return;
-  const faltan = [...R.players].filter(id => !E.listos.has(id));
+  const faltan = [...R.players].filter(id => !R.listos.has(id));
   if (faltan.length === 0) draw(R, R.esquivador);
 }
 
