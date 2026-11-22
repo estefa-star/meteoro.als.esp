@@ -5,7 +5,7 @@ addEventListener('pointerdown', () => sonar('init'), { once: true });   // el na
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
 const meteoro = '/recursos/estrella.svg';
-const nebulosa = '/recursos/nebulosa.svg';
+const nebulosa = '/recursos/nebulosa.svg'; 
 const NUEVA = '__nueva__';   // valor de la opción "Crear sala nueva"
 
 const socket = io();
@@ -14,6 +14,7 @@ let rol = '', phase = 'waiting', lastP = '', st = { n: 1 };
 let cam = false, act = () => { };
 let until = 0, lastEt = -1, lastTt = -1;
 let sorteoRoles = Promise.resolve(); //hasta que no se resuelva, no se muestran los roles.
+let preparado = false;
 
 
 // ===== 2. Pantallas (cartel central) =====
@@ -365,14 +366,16 @@ socket.on('state', s => {
   $('#chip').textContent = me ? `${themeName} · ${me.room} · ${s.n} ${s.n === 1 ? 'jugador' : 'jugadores'}` : '';
   cvEl.style.cursor = rol === 'lanzador' && s.p === 'empezado' ? 'crosshair' : 'default';
   $('#msg').textContent = rol === 'lanzador' && s.p === 'waiting' ? (s.esquivador ? `${s.pn} se está preparando…` : '') : '';
+  if (s.p === 'over' && preparado) $('#btn').textContent = `Esperando a los demás (${s.ls}/${s.n})`;
   if (s.p !== lastP) {
     lastP = s.p;
     if (s.p === 'countdown') Avisos.indicacion(rol === 'esquivador' ? 'esquivar' : 'lanzar');
     if (s.p === 'countdown' || s.p === 'empezado') $('#ov').hidden = true;                 //ranking 
     if (s.p === 'over') {
       sonar('gameOver');
+      preparado = false
       const golpe = s.k ? `${s.k} destruyó la estrella. ` : '';
-      show('Fin del viaje', `${golpe}${s.pn} aguantó ${(s.s / 10).toFixed(1)} s (mejor: ${(s.b / 10).toFixed(1)} s). ¿Sorteamos de nuevo?`, 'Sortear de nuevo', draw);
+      show('Fin del viaje', `${golpe}${s.pn} aguantó ${(s.s / 10).toFixed(1)} s (mejor: ${(s.b / 10).toFixed(1)} s). ¿Sorteamos de nuevo?`, 'Sortear de nuevo', () => {preparado = true; $('#btn').disabled = true; draw(); });
       mostrarRanking();
 }
 }});

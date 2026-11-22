@@ -151,7 +151,7 @@ const Avisos = (() => {
     lanzar:   ['Lanzá',   'Mantené pulsado para cargar y soltá'],
   };
 
-  function indicacion(tipo, duracion = 2600) {
+  function indicacion(tipo, duracion = 5000) {
     if (!ICONOS[tipo]) return Promise.resolve();
     const el = h('div', `av-card ${tipo}`);
     const ico = h('div', 'av-ico');

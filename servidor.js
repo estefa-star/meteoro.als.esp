@@ -7,6 +7,7 @@ const app = express();
 
 // Esto dice que el servidor online el https lo ponela pag
 // En el local sigue siendo https por la camara
+// Utilizando la página llamda "RENDER"
 const usarHttp = !!(process.env.RENDER || process.env.USE_HTTP);
 let server;
 if (usarHttp) {
@@ -43,7 +44,7 @@ const CLIENT = {
    SHIP_HALF: 0.04,      //colisión de la estrella
    METEOR_R: 0.11,       //radio de choque del meteorito, tanto para dibujarlo como para el choque
    SHIP_LIM: 0.92,       //distancia máxima de la pantalla que puede ir la estrella
-   SHIP_MAX_SPEED: 5,    //velocidad máxima de la estrella
+   SHIP_MAX_SPEED: 10,    //velocidad máxima de la estrella
    COOLDOWN_BASE: 400,   //espera mínima por lanzamiento en ms
    COOLDOWN_PER: 80,     //esta espera se suma por nivel (como es máximo nivel 10 se suma hasta 800 ms)
    THEMES,
@@ -58,24 +59,25 @@ const CFG = {
    MAX_PLAYERS: 10, 
    INVULN: 1.6,        //invencibilidad.
    COUNTDOWN: 5,       //segundos antes de iniciar.
-   HIT_T: 0.03,        //distancia que detecta el meteorito impactando.
-   REMOVE_T: -0.14,    //distancia que se borra el meteorito que ya pasó
+   HIT_T: 0.03,        //distancia que detecta la nebulosa impactando.
+   REMOVE_T: -0.14,    //distancia que se borra la nebulosa que ya pasó
 };
 
 // ===== 3. Utilidades y salas =====
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const laneX = i => ((i + 0.5) / CFG.LANES) * 2 - 1;
 const sock = id => io.sockets.sockets.get(id);
-const etapa = R => Math.floor(R.time / 20);  //etapa de dificultad que sube cada x tiempo marcado ahí, en este caso 10 seg.
+const etapa = R => Math.floor(R.time / 20);  //etapa de dificultad que sube cada x tiempo marcado ahí, en este caso 20 seg.
 //const TOAST_CADA = 100;
-//const tiempoToast = R => Math.floor(R.time / 100);  //cambiar tanto este como el de arriba para 100 segundos.
+//const tiempoToast = R => Math.floor(R.time / 100);  //cambiar tanto este como el de arriba para 100 segundos.  //QUITADO
+const ESPERA_MAX = 20 //20 segundos de espera para los demás jugadores.
 const rooms = new Map();
 const newRoom = (code, theme) => ({
   code, theme, phase: 'waiting', esquivador : null, ship: 0, target: 0, lives: CFG.LIVES,
-  time: 0, inv: 0, cd: 0, best: 0, seq: 0, m: [], players: new Set(),
+  time: 0, inv: 0, cd: 0, best: 0, seq: 0, m: [], players: new Set(), listos: new Set(),
 });
-const toWaiting = R => Object.assign(R, { phase: 'waiting', ship: 0, target: 0, lives: CFG.LIVES, time: 0, inv: 0, m: [] });
-const start = R => Object.assign(R, { phase: 'countdown', cd: CFG.COUNTDOWN, lives: CFG.LIVES, time: 0, inv: 0, m: [] });
+const toWaiting = R => Object.assign(R, { phase: 'waiting', ship: 0, target: 0, lives: CFG.LIVES, time: 0, inv: 0, m: [], listos: new Set() });
+const start = R => Object.assign(R, { phase: 'countdown', cd: CFG.COUNTDOWN, lives: CFG.LIVES, time: 0, inv: 0, m: [], listos: new Set() });
 
 const roster = R => io.to(R.code).emit('roster',
   [...R.players].map(sock).filter(Boolean).map(s => ({
@@ -86,6 +88,7 @@ const roster = R => io.to(R.code).emit('roster',
 
 // ===== 4. Simulación (física y colisiones) =====
 function step(R, dt) {
+  if (R.phase === 'over' && Date.now() - R.overDede > ESPERA_MAX * 1000) { draw(R, R.esquivador); return; }
   const d = clamp(R.target - R.ship, -CFG.SHIP_MAX_SPEED * dt, CFG.SHIP_MAX_SPEED * dt);
   R.ship = clamp(R.ship + d, -CFG.SHIP_LIM, CFG.SHIP_LIM);
 
@@ -115,6 +118,7 @@ function step(R, dt) {
         }
         if (R.lives <= 0) {
           R.phase = 'over';
+          R.overDesde = Date.now();
           R.killer = m.ownerName;
           R.best = Math.max(R.best, Math.floor(R.time * 10));
         }
@@ -137,7 +141,7 @@ setInterval(() => {
   for (const R of rooms.values()) {
     io.to(R.code).emit('state', {
       et: etapa(R),
-      //tt: tiempoToast(R),
+      //tt: tiempoToast(R), //NO UTILIZADO
       k: R.phase === 'over' ? R.killer : '',
       p: R.phase,
       sx: +R.ship.toFixed(3),
@@ -150,6 +154,7 @@ setInterval(() => {
       esquivador: !!R.esquivador,
       pn: R.esquivador && sock(R.esquivador) ? sock(R.esquivador).data.name : '',
       n: R.players.size,
+      ls: R.listos.size,
     });
   }
 }, 1000 / 30);
@@ -171,10 +176,17 @@ function draw(R, exclude) {
   roster(R);
 }
 
+function revisarSorteo(R) {
+  if (R.phase !== 'over') return;
+  const faltan = [...R.players].filter(id => !E.listos.has(id));
+  if (faltan.length === 0) draw(R, R.esquivador);
+}
+
 function leave(socket) {
   const R = rooms.get(socket.data.room);
   if (!R) return;
   R.players.delete(socket.id);
+  R.listos.delete(socket.id);
   socket.leave(R.code);
   socket.data.room = null;
   socket.data.rol = null;
@@ -183,7 +195,7 @@ function leave(socket) {
     toWaiting(R);
     for (const s of [...R.players].map(sock).filter(Boolean)) { s.data.rol = 'lobby'; s.emit('rol', 'lobby'); }
   }
-  if (!R.players.size) rooms.delete(R.code); else roster(R);
+  if (!R.players.size) rooms.delete(R.code); else roster(R); revisarSorteo(R);
 }
 
 
@@ -220,7 +232,11 @@ io.on('connection', socket => {
   // Sorteo y turnos
   socket.on('draw', () => {
     const R = rm();
-    if (R && (!R.esquivador || R.phase === 'over')) draw(R, R.phase === 'over' ? R.esquivador : null);
+    if (!R) return;
+    if (!R.esquivador) return draw (R, null);
+    if (R.phase !== 'over') return;
+    R.listos.add(socket.id);
+    revisarSorteo(R);
   });
   socket.on('pass', () => {
     const R = rm();
@@ -255,7 +271,7 @@ io.on('connection', socket => {
       x: laneX(lane),
       t: 1,
       v: +((CFG.SPEED_MIN + ((speed - 1) / 9) * (CFG.SPEED_MAX - CFG.SPEED_MIN)) * (1 + 0.15 * etapa(R))).toFixed(3),  //el último paréntesis que se multiplica por etapa(R) es el multiplicador de velocidad, 
-                                                                                                                      //en este caso cada aumento de dificultad se suma un 50% o 0.5 a 1 de velocidad. 
+                                                                                                                      //en este caso cada aumento de dificultad se suma un 15% o 0.15 a 1 de velocidad. 
       hue: hs[Math.floor(Math.random() * hs.length)],
       seed: +Math.random().toFixed(2),
       owner: socket.id,
