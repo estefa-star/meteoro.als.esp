@@ -1,0 +1,416 @@
+
+
+/* ===== 1. Variables y base ===== */
+:root {
+  --bg: #0b0836;
+  --cream: #fff3c4;
+  --pink: #ff4fa8;
+  --orange: #ff9a3d;
+  --yellow: #ffd84d;
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--cream);
+  font: 500 17px Fredoka, "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+
+
+/* ===== 2. Zona de juego (canvas y mensaje) ===== */
+#top {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+#top canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+#msg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 20px;
+  font-size: 22px;
+  text-shadow: 0 0 12px #0b0836;
+  pointer-events: none;
+}
+
+
+/* ===== 3. Carteles y botones ===== */
+.ov {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 6, 40, .45);
+  z-index: 5;
+}
+
+.card {
+  background: rgba(22, 15, 86, .82);
+  border: 2px solid rgba(255, 243, 196, .25);
+  border-radius: 28px;
+  padding: 26px 30px;
+  max-width: 420px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 60px rgba(255, 120, 200, .25);
+}
+
+.card p {
+  margin: 6px 0 18px;
+  line-height: 1.35;
+}
+
+
+.logo {
+  font-size: 44px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--cream);
+  text-shadow: 0 0 22px rgba(255, 214, 120, .7);
+}
+
+.btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 19px;
+  color: #2a1450;
+  border: 0;
+  border-radius: 999px;
+  padding: 13px 28px;
+  background: linear-gradient(90deg, var(--pink), var(--orange), var(--yellow));
+  box-shadow: 0 0 24px rgba(255, 150, 100, .55);
+  cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.btn:active { transform: scale(.96); }
+.btn:disabled { opacity: .45; }
+
+
+/* ===== 4. Indicador de sala (arriba al centro) ===== */
+.chip {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(22, 15, 86, .7);
+  border: 1px solid rgba(255, 243, 196, .25);
+  z-index: 4;
+  font-size: 15px;
+}
+
+
+    [hidden] {
+      display: none !important
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh
+    }
+
+    #top {
+      position: relative;
+      flex: 1;
+      min-height: 0
+    }
+
+    #top canvas {
+      touch-action: none;
+      -webkit-touch-callout: none;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%
+    }
+
+    #msg {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 20px;
+      font-size: 22px;
+      text-shadow: 0 0 12px #0b0836;
+      pointer-events: none
+    }
+
+    /* ===== 5. Panel del lanzador ===== */
+
+    #pan {
+      padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
+      background: #120c4a;
+      border-top: 2px solid rgba(255, 243, 196, .2)
+    }
+
+    #cdw {
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 243, 196, .15);
+      margin: 10px 0
+    }
+
+    #cd {
+      height: 100%;
+      width: 0;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #ff4fa8, #ffd84d)
+    }
+
+    /* ===== 6. Cámara del piloto ===== */
+
+    #cam {
+      position: fixed;
+      left: 14px;
+      bottom: 14px;
+      width: 200px;
+      z-index: 4;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 2px solid rgba(255, 243, 196, .3);
+      background: #000
+    }
+
+    #cam video {
+      width: 100%;
+      display: block;
+      transform: scaleX(-1)
+    }
+
+    #mk {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #ffd84d;
+      box-shadow: 0 0 8px #ffd84d
+    }
+
+    #mk0 {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      background: #4de8c2;
+      opacity: .6
+    }
+
+   /*
+   #cam label {
+      display: block;
+      font-size: 12px;
+      padding: 4px 10px;
+      background: rgba(22, 15, 86, .85)
+    }
+
+    #cam input {
+      width: 100%
+    }
+   */
+
+    /* ===== 7. Formulario de entrada ===== */
+
+    #skip {
+      background: none;
+      border: 0;
+      color: var(--cream);
+      font: inherit;
+      font-size: 14px;
+      opacity: .75;
+      margin-top: 14px;
+      text-decoration: underline;
+      cursor: pointer
+    }
+
+    .txt {
+      width: 100%;
+      font: inherit;
+      padding: 12px 16px;
+      margin: 5px 0;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 243, 196, .3);
+      background: rgba(255, 255, 255, .08);
+      color: var(--cream);
+      text-align: center;
+      -webkit-user-select: text;
+      user-select: text;
+      outline: none
+    }
+
+    .txt:focus {
+      border-color: var(--yellow)
+    }
+
+    #ths,
+    #act {
+      display: flex;
+      gap: 6px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+      justify-content: center
+    }
+
+    #act:empty {
+      display: none
+    }
+
+    .th {
+      border: 2px solid transparent;
+      border-radius: 16px;
+      padding: 7px 10px;
+      background: rgba(255, 255, 255, .08);
+      color: var(--cream);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer
+    }
+
+    .th.on {
+      border-color: var(--yellow);
+      background: rgba(255, 216, 77, .15)
+    }
+
+    .th i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: 0 1px
+    }
+
+    #err {
+      color: #ff9acb;
+      min-height: 20px;
+      font-size: 14px
+    }
+
+    /* ===== 8. Lista de jugadores ===== */
+
+    #roster {
+      position: fixed;
+      right: 12px;
+      top: 72px;
+      width: 200px;
+      max-height: 42vh;
+      overflow: auto;
+      z-index: 4;
+      font-size: 14px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(22, 15, 86, .72);
+      border: 1px solid rgba(255, 243, 196, .25)
+    }
+
+    #roster header {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 700
+    }
+
+    #roster li {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 2px 0
+    }
+
+    #roster ul {
+      list-style: none;
+      margin: 6px 0;
+      padding: 0
+    }
+
+    #roster .me {
+      color: var(--yellow)
+    }
+
+    #roster .img{
+      vertical-align: middle;
+    }
+
+    #lv {
+      background: none;
+      border: 0;
+      color: var(--cream);
+      font: inherit;
+      font-size: 13px;
+      opacity: .8;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0
+    }
+
+    select.txt {
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer
+    }
+
+    select.txt option {
+      background: #160f56;
+      color: var(--cream)
+    }
+
+    #rk { 
+      list-style: none;
+      margin: 0 0 16px; 
+      padding: 0; 
+      text-align: left; 
+      font-size: 16px; 
+    }
+
+#rk li { 
+  display: flex; 
+  justify-content: space-between; 
+  gap: 12px; 
+  padding: 4px 0; 
+  border-bottom: 1px solid rgba(255, 243, 196, .15); 
+
+}
+#rk li.me { 
+  color: var(--yellow); 
+}
+
+@media (max-width: 600px), (pointer: coarse) {
+  #cam {
+    opacity: 0;
+    pointer-events: none;   /* para que no tape los toques de abajo */
+  }
+}

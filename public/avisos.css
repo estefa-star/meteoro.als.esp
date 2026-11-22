@@ -1,0 +1,241 @@
+/* avisos.css — aspecto de los avisos (estética "meteoro"). Editá libremente. */
+
+/* ===== PALETAS: una por universo =====
+   Cada una son 5 colores (--av-1 a --av-5). Se cambia desde el juego con
+   Avisos.paleta('aurora') (acepta 'Órbita', 'orbita', etc.). */
+#avisos-root,
+#avisos-root[data-paleta="orbita"] {
+  --av-1: #FF4D94;  /* rosa */
+  --av-2: #FF9A3D;  /* naranja */
+  --av-3: #FFD43B;  /* amarillo */
+  --av-4: #2EE59D;  /* verde */
+  --av-5: #3DB5F5;  /* azul */
+}
+#avisos-root[data-paleta="aurora"] {
+  --av-1: #34F5A8;  --av-2: #2EE6D6;  --av-3: #3CC8F5;  --av-4: #3F8CF5;  --av-5: #52F07A;
+}
+#avisos-root[data-paleta="atardecer"] {
+  --av-1: #FF4D5E;  --av-2: #FF7043;  --av-3: #FF9A3D;  --av-4: #FFB63D;  --av-5: #FFE04A;
+}
+#avisos-root[data-paleta="nebulosa"] {
+  --av-1: #A64DFF;  --av-2: #D14DFF;  --av-3: #FF4DD2;  --av-4: #6A4DFF;  --av-5: #4D7DFF;
+}
+
+/* ===== BASE: colores, tipografía y contenedor ===== */
+#avisos-root {
+  --av-panel:       rgba(26, 16, 86, .97);   /* fondo de los paneles (bajá el .97 para más transparencia) */
+  --av-panel-solido: #1B1160;
+  --av-panel-2:     rgba(48, 32, 132, .98);
+  --av-borde:       rgba(255, 255, 255, .22);
+  --av-crema:       #FFF1C9;                 /* textos */
+  --av-tinta:       #2B1065;                 /* texto sobre botones claros */
+  --av-brillo:      0 0 18px rgba(255, 214, 120, .55);
+  --av-grad:        linear-gradient(100deg, var(--av-1), var(--av-2) 55%, var(--av-3));
+  --av-esquiva:     var(--av-5);             /* color del rol que esquiva */
+  --av-lanza:       var(--av-2);             /* color del rol que lanza */
+
+  /* Poné acá la fuente de tu juego (la primera que exista se usa) */
+  --av-fuente: "Fredoka", "Baloo 2", "Nunito", "Trebuchet MS", system-ui, sans-serif;
+
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden;
+  font-family: var(--av-fuente); font-weight: 600; color: var(--av-crema);
+}
+
+/* ===== FORMAS ORGÁNICAS (la "respiración" de los blobs) ===== */
+@keyframes av-morph {
+  0%   { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; }
+  50%  { border-radius: 45% 55% 40% 60% / 58% 42% 58% 42%; }
+  100% { border-radius: 55% 45% 62% 38% / 44% 56% 44% 56%; }
+}
+/* versión para formas anchas (el aviso de nivel): radios en px para que no se vea como una elipse lisa */
+@keyframes av-morph-ancho {
+  0%   { border-radius: 150px 60px 120px 40px / 70px 130px 50px 110px; }
+  50%  { border-radius: 60px 150px 40px 130px / 120px 50px 110px 60px; }
+  100% { border-radius: 130px 40px 150px 70px / 50px 120px 70px 130px; }
+}
+@keyframes av-flota { from { transform: translateY(-7px); } to { transform: translateY(7px); } }
+
+/* ===== AVISO DE NIVEL ===== */
+.av-nivel {
+  position: absolute; 
+  left: 50%; 
+  top: 15%; 
+  translate: -50% -15%; 
+  isolation: isolate;
+  width: min(450px, 90vw); box-sizing: border-box; padding: 60px 30px 54px; text-align: center;
+}
+.av-nivel .av-blob {
+  position: absolute; inset: 0; z-index: -1;
+  background: radial-gradient(120% 120% at 28% 18%, var(--av-panel-2), var(--av-panel));
+  border: 3px solid var(--av-borde);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--av-1) 30%, transparent),
+              0 0 70px color-mix(in srgb, var(--av-1) 35%, transparent),
+              0 26px 70px rgba(0, 0, 0, .5);
+  backdrop-filter: blur(6px);
+  animation: av-morph-ancho 3.6s ease-in-out infinite alternate;
+}
+.av-pildora {
+  display: inline-block; font-style: normal; padding: 4px 18px; border-radius: 999px;
+  background: var(--av-grad); color: var(--av-tinta);
+  font-size: .85rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+}
+.av-nivel b {
+  display: block; margin: 8px 0 2px; font-size: clamp(2.6rem, 7vw, 5rem); line-height: 1;
+  font-weight: 700; color: var(--av-crema); text-shadow: var(--av-brillo);
+}
+.av-sub { display: block; font-size: 1.1rem; opacity: .92; }
+.av-orbe {
+  position: absolute; translate: -50% -50%; border-radius: 50%;
+  background: var(--c); box-shadow: 0 0 16px var(--c);
+  animation: av-flota 2.4s ease-in-out infinite alternate;
+}
+
+/* ===== COMETA (cruza la pantalla antes del aviso de nivel) ===== */
+.av-cometa {
+  position: absolute; left: 0; top: 0; display: flex; flex-direction: row-reverse;
+  align-items: center; gap: 8px; transform-origin: 100% 50%;
+}
+.av-cometa svg {
+  width: 36px; height: 36px; fill: var(--av-crema); stroke: var(--av-crema);
+  stroke-width: 5; stroke-linejoin: round; filter: drop-shadow(0 0 10px rgba(255, 214, 120, .85));
+}
+.av-cometa i { border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); }
+
+/* ===== TARJETAS DE INDICACIÓN ===== */
+.av-card { --av-rol: var(--av-esquiva); }
+.av-card.esquivar { --av-rol: var(--av-esquiva); }
+.av-card.lanzar   { --av-rol: var(--av-lanza); }
+.av-card {
+  position: absolute; left: 50%; bottom: 12%; translate: -50% 0;
+  width: min(410px, 92vw); box-sizing: border-box;
+  display: flex; align-items: center; gap: 18px; padding: 16px 24px 16px 16px;
+  background: var(--av-panel); border: 2px solid var(--av-borde); border-radius: 34px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .45),
+              0 0 44px color-mix(in srgb, var(--av-rol) 32%, transparent);
+}
+.av-card h3 { margin: 0; font-size: 1.45rem; font-weight: 700; color: var(--av-crema); text-shadow: var(--av-brillo); }
+.av-card p  { margin: 3px 0 0; font-size: 1rem; line-height: 1.25; font-weight: 500; opacity: .92; }
+
+/* ===== ICONOS ===== */
+.av-ico { position: relative; flex: none; width: 92px; height: 92px; }
+.av-ico-blob {
+  position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--av-rol) 26%, transparent);
+  border: 2px solid color-mix(in srgb, var(--av-rol) 65%, transparent);
+  animation: av-morph 3.4s ease-in-out infinite alternate;
+}
+.av-ico svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+/* esquivar: cabecita que se balancea */
+.av-dots-i circle { fill: var(--av-1); animation: av-fl 1.6s infinite; }
+.av-dots-d circle { fill: var(--av-3); animation: av-fr 1.6s infinite; }
+.av-cuerpo { fill: var(--av-2); }
+.av-cara   { fill: var(--av-3); }
+.av-ojo    { fill: var(--av-tinta); }
+.av-boca   { fill: none; stroke: var(--av-tinta); stroke-width: 2.6; stroke-linecap: round; }
+.av-cabeza { animation: av-sway 1.6s ease-in-out infinite; transform-origin: 46px 80px; }
+@keyframes av-sway { 0%,100% { transform: translateX(-7px) rotate(-11deg); } 50% { transform: translateX(7px) rotate(11deg); } }
+@keyframes av-fl   { 0%,100% { opacity: 1; } 50% { opacity: .15; } }
+@keyframes av-fr   { 0%,100% { opacity: .15; } 50% { opacity: 1; } }
+
+/* lanzar: se carga el anillo y sale disparada la pelota */
+.av-pista  { fill: none; stroke: rgba(255, 255, 255, .18); stroke-width: 7; }
+.av-anillo {
+  fill: none; stroke: var(--av-lanza); stroke-width: 7; stroke-linecap: round;
+  stroke-dasharray: 170; stroke-dashoffset: 170; transform: rotate(-90deg); transform-origin: 46px 46px;
+  animation: av-fill 1.8s ease-in-out infinite;
+}
+.av-pelota { transform-origin: 46px 46px; animation: av-bola 1.8s ease-in-out infinite; filter: drop-shadow(0 0 7px var(--av-1)); }
+.av-bola   { fill: var(--av-1); }
+.av-brillo { fill: #fff; opacity: .75; }
+@keyframes av-fill { 0% { stroke-dashoffset: 170; opacity: 1; } 65%,85% { stroke-dashoffset: 0; opacity: 1; } 95% { stroke-dashoffset: 0; opacity: 0; } 100% { stroke-dashoffset: 170; opacity: 0; } }
+@keyframes av-bola {
+  0%   { transform: scale(.55); opacity: 1; }
+  65%  { transform: scale(1.05); }
+  72%  { transform: scale(1.18, .88); }
+  86%  { transform: translateY(-40px) scale(.5); opacity: 0; }
+  99%  { transform: scale(.55); opacity: 0; }
+  100% { transform: scale(.55); opacity: 1; }
+}
+
+/* ===== TOAST ===== */
+.av-toast {
+  position: absolute; left: 50%; top: 10%; translate: -50% 0; white-space: nowrap;
+  padding: 12px 28px; border-radius: 999px; font-size: 1.15rem; font-weight: 700;
+  color: var(--av-crema); text-shadow: var(--av-brillo);
+  border: 3px solid transparent;
+  background: linear-gradient(var(--av-panel-solido), var(--av-panel-solido)) padding-box, var(--av-grad) border-box;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+}
+
+/* ===== CONFETI (puntitos y estrellas) ===== */
+.av-confeti { position: absolute; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+.av-confeti.estrella {
+  border-radius: 0; box-shadow: none;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+/* ===== SORTEO DE ROLES ===== */
+.av-sorteo {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: min(640px, 94vw); box-sizing: border-box; padding: 28px 18px 24px; text-align: center;
+  background: var(--av-panel); border: 2px solid var(--av-borde); border-radius: 38px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .55), 0 0 60px color-mix(in srgb, var(--av-1) 18%, transparent);
+}
+.av-sorteo h3 { margin: 0 0 18px; font-size: 1.7rem; font-weight: 700; color: var(--av-crema); text-shadow: var(--av-brillo); }
+.av-sorteo-msg { margin: 20px 0 0; font-size: 1.05rem; }
+
+.av-fichas { display: flex; justify-content: center; gap: 12px; padding-top: 14px; }
+.av-ficha {
+  flex: 1; max-width: 108px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), opacity .3s;
+}
+.av-ficha i {
+  width: 100%; aspect-ratio: 1; display: grid; place-items: center; box-sizing: border-box;
+  font: normal 700 2rem var(--av-fuente); color: var(--av-tinta);
+  background: var(--col);
+  box-shadow: inset -6px -8px 0 rgba(0, 0, 0, .14), inset 5px 6px 0 rgba(255, 255, 255, .28);
+  transition: box-shadow .2s; animation: av-morph 4s ease-in-out infinite alternate;
+}
+.av-ficha:nth-child(2n) i { animation-duration: 5s; animation-delay: -1.2s; }
+.av-ficha:nth-child(3n) i { animation-duration: 3.6s; animation-delay: -2.4s; }
+.av-ficha span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .95rem; }
+.av-ficha em {
+  visibility: hidden; font: normal 700 .78rem var(--av-fuente); text-transform: uppercase; letter-spacing: .06em;
+  padding: 3px 12px; border-radius: 999px;
+  background: rgba(255, 255, 255, .12); border: 2px solid rgba(255, 255, 255, .25); color: var(--av-crema);
+}
+/* mientras gira */
+.av-fichas.girando .av-ficha { opacity: .6; }
+.av-ficha.on { opacity: 1 !important; transform: translateY(-10px) scale(1.14); }
+.av-ficha.on i {
+  box-shadow: inset -6px -8px 0 rgba(0, 0, 0, .14), inset 5px 6px 0 rgba(255, 255, 255, .28),
+              0 0 0 4px var(--av-crema), 0 0 30px 4px var(--col);
+}
+/* resultado */
+.av-ficha.lanza { opacity: .78; }
+.av-ficha.lanza em, .av-ficha.esquiva em { visibility: visible; }
+.av-ficha.esquiva { transform: translateY(-12px) scale(1.2); }
+.av-ficha.esquiva i {
+  box-shadow: inset -6px -8px 0 rgba(0, 0, 0, .14), inset 5px 6px 0 rgba(255, 255, 255, .28),
+              0 0 0 4px var(--av-crema), 0 0 38px 6px var(--col);
+}
+.av-ficha.esquiva em { background: var(--av-grad); border-color: transparent; color: var(--av-tinta); }
+
+/* pantallas angostas */
+@media (max-width: 520px) {
+  .av-fichas { gap: 6px; }
+  .av-ficha i { font-size: 1.4rem; }
+  .av-ficha span { font-size: .74rem; }
+  .av-ficha em { font-size: .58rem; padding: 2px 6px; border-width: 2px; }
+  .av-card { gap: 12px; padding-right: 16px; }
+  .av-ico { width: 78px; height: 78px; }
+}
+
+/* "reducir movimiento": quietas las formas, el sorteo sigue girando */
+@media (prefers-reduced-motion: reduce) {
+  .av-blob, .av-ico-blob, .av-ficha i, .av-orbe { animation: none; }
+  .av-ficha.on, .av-ficha.esquiva { transform: none; }
+}
