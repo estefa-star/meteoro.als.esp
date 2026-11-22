@@ -267,6 +267,7 @@ $('#go').onclick = () => {
   enter({ name: $('#nm').value, room: crear ? $('#rmNuevo').value : $('#rm').value, theme: pick });
   sonar('musica');
 };
+$('#lv').onclick = () => location.reload(); //lo que sirve para que se pueda salir del universo en la botonera de jugadores.
 
 
 // ===== 7. Lista de jugadores y ranking =====
@@ -366,6 +367,10 @@ socket.on('state', s => {
   $('#chip').textContent = me ? `${themeName} · ${me.room} · ${s.n} ${s.n === 1 ? 'jugador' : 'jugadores'}` : '';
   cvEl.style.cursor = rol === 'lanzador' && s.p === 'empezado' ? 'crosshair' : 'default';
   $('#msg').textContent = rol === 'lanzador' && s.p === 'waiting' ? (s.esquivador ? `${s.pn} se está preparando…` : '') : '';
+    if (s.p === 'over') {
+    const seg = s.os >= 0 ? ` · ${s.os} s` : '';
+    $('#btn').textContent = preparado ? `Esperando a los demás (${s.ls}/${s.n})${seg}` : `Sortear de nuevo${seg}`;
+  }
   if (s.p === 'over' && preparado) $('#btn').textContent = `Esperando a los demás (${s.ls}/${s.n})`;
   if (s.p !== lastP) {
     lastP = s.p;

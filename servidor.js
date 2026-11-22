@@ -41,7 +41,7 @@ const THEMES = {
 const CLIENT = {
    LANES: 7,             //cantidad de carriles
    LIVES: 3,
-   SHIP_HALF: 0.04,      //colisión de la estrella
+   SHIP_HALF: 0.06,      //colisión de la estrella
    METEOR_R: 0.11,       //radio de choque del meteorito, tanto para dibujarlo como para el choque
    SHIP_LIM: 0.92,       //distancia máxima de la pantalla que puede ir la estrella
    SHIP_MAX_SPEED: 10,    //velocidad máxima de la estrella
@@ -88,7 +88,6 @@ const roster = R => io.to(R.code).emit('roster',
 
 // ===== 4. Simulación (física y colisiones) =====
 function step(R, dt) {
-  if (R.phase === 'over' && Date.now() - R.overDesde > ESPERA_MAX * 1000) { draw(R, R.esquivador); return; }
   const d = clamp(R.target - R.ship, -CFG.SHIP_MAX_SPEED * dt, CFG.SHIP_MAX_SPEED * dt);
   R.ship = clamp(R.ship + d, -CFG.SHIP_LIM, CFG.SHIP_LIM);
 
@@ -118,7 +117,7 @@ function step(R, dt) {
         }
         if (R.lives <= 0) {
           R.phase = 'over';
-          R.overDesde = Date.now();
+          R.listos = new Set();   // en esta partida todavía no apretó nadie
           R.killer = m.ownerName;
           R.best = Math.max(R.best, Math.floor(R.time * 10));
         }
@@ -134,7 +133,10 @@ let last = Date.now();
 setInterval(() => {
   const n = Date.now(), dt = Math.min(0.05, (n - last) / 1000);
   last = n;
-  for (const R of rooms.values()) step(R, dt);
+  for (const R of rooms.values()) {
+    step(R, dt);
+    if (R.phase === 'over' && R.listos.size > 0 && n - R.overDesde > ESPERA_MAX * 1000) draw(R, R.esquivador);
+  }
 }, 1000 / 60);
 
 setInterval(() => {
@@ -144,6 +146,7 @@ setInterval(() => {
       //tt: tiempoToast(R), //NO UTILIZADO
       k: R.phase === 'over' ? R.killer : '',
       p: R.phase,
+      os: R.phase === 'over' && R.listos.size > 0 ? Math.max(0, Math.ceil(ESPERA_MAX - (Date.now() - R.overDesde) / 1000)) : -1,
       sx: +R.ship.toFixed(3),
       l: R.lives,
       s: Math.floor(R.time * 10),
@@ -157,7 +160,7 @@ setInterval(() => {
       ls: R.listos.size,
     });
   }
-}, 1000 / 30);
+}, 1000 / 60);
 
 
 // ===== 6. Sorteo de Meteoro y salida de salas =====
@@ -235,6 +238,9 @@ io.on('connection', socket => {
     if (!R) return;
     if (!R.esquivador) return draw (R, null);
     if (R.phase !== 'over') return;
+     if (R.listos.size === 0) R.overDesde = Date.now();   // el contador arranca con el primero que apreta preparado.
+    R.listos.add(socket.id);                             // fin de la partida: se espera a todos
+    revisarSorteo(R);
     R.listos.add(socket.id);
     revisarSorteo(R);
   });
