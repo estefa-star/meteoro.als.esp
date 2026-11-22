@@ -357,7 +357,7 @@ socket.on('state', s => {
   if (s.p === 'empezado') {                                   // sonido de aceleración al subir la dificultad
     if (lastEt >= 0 && s.et > lastEt)
       { sonar('acelera');
-    Avisos.toast(`¡Las nebulosas van más rápidas!`);
+    Avisos.toast(`¡Las nebulosas van más rápido!`);
   }
     lastEt = s.et;
 
